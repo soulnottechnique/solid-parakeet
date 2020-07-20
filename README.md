@@ -1,6 +1,6 @@
 # solid-parakeet
-Nice repo for an awesome ray-casting computer game.
-For graphics we use CSFML. Yes, we write on pure C.
+Nice repo for an awesome ray-casting computer game.  
+For graphics we use CSFML. Yes, we write on **pure C**.
 
 ## Our team:
 ### Developers:

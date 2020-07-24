@@ -13,16 +13,17 @@ enum error_code {BAD_WINDOW = 1, BAD_FONT};
 #define WIN_HEIGHT 600
 #define WIN_WIDTH 800
 #define WIN_BPP 32
-#define FPS 30U
+#define FPS 60U
 
 #define PERSON_SPEED 4.0F
 #define VIEWING_ANGLE 2.0 * PI / 3.0
 #define MOUSE_SCALE 100.0
 
 #define WALLS (5 + 4)
-#define RAYS 500
+#define RAYS 100
 
-vector2d person_delta(double);
+vector2d person_delta(double angle);
+void intersection_cr(sfRenderWindow *window, sfVector2f pos, line wall[]);
 
 int main(void)
 {
@@ -37,13 +38,6 @@ int main(void)
     sfFont *font = sfFont_createFromFile("font.ttf");
     if (!font)
         return BAD_FONT;
-
-    sfText *text = sfText_create();
-    sfVector2f text_pos = {300.0, 50.0};
-    sfText_setFont(text, font);
-    sfText_setCharacterSize(text, 70);
-    sfText_setPosition(text, text_pos);
-    sfText_setString(text, "0");
 
     sfVector2f circ_pos = {200.0, 200.0};
     sfCircleShape *circle = sfCircleShape_create();
@@ -98,12 +92,9 @@ int main(void)
                 sfRenderWindow_close(window);
             if (event.type == sfEvtMouseMoved)
             {
-                int new_pos = sfMouse_getPositionRenderWindow(window).x;
-                angle -= (double) (mouse_pos - new_pos) / MOUSE_SCALE;
-                mouse_pos = new_pos;
-                char angle_str[10];
-                snprintf(angle_str, 10, "%lf", angle);
-                sfText_setString(text, angle_str);
+                int new_mouse_pos = sfMouse_getPositionRenderWindow(window).x;
+                angle -= (double) (mouse_pos - new_mouse_pos) / MOUSE_SCALE;
+                mouse_pos = new_mouse_pos;
             }
         }
         delta = person_delta(angle);
@@ -112,33 +103,11 @@ int main(void)
         sfCircleShape_setPosition(circle, circ_pos);
         sfRenderWindow_clear(window, sfBlack);
 
-        sfVector2f look_for;
-        vector2d sect_dot;
-        line ray;
-        sfVertex cast_line[2];
-        _Bool hit;
-        for (size_t i = 0; i < RAYS; i++)
-        {
-            double alpha = 2 * PI / RAYS * i;
-            hit = false;
-            look_for.x = circ_pos.x + (float) cos(alpha) * 10;
-            look_for.y = circ_pos.y + (float) sin(alpha) * 10;
-            line_init(&ray, circ_pos.x, circ_pos.y, look_for.x, look_for.y);
-            sect_dot = intersect(&ray, wall, WALLS, &hit);
-            if (hit)
-            {
-                cast_line[0].position = circ_pos;
-                cast_line[1].position.x = (float) sect_dot.x;
-                cast_line[1].position.y = (float) sect_dot.y;
-                cast_line[0].color = cast_line[1].color = sfBlue;
-                sfRenderWindow_drawPrimitives(window, cast_line, 2, sfLines, NULL);
-            }
-        }
+        intersection_cr(window, circ_pos, wall);
 
         for (size_t i = 0; i < WALLS; i++)
             sfRenderWindow_drawPrimitives(window, vert_wall[i], 2, sfLines, NULL);
 
-        sfRenderWindow_drawText(window, text, NULL);
         sfRenderWindow_drawCircleShape(window, circle, NULL);
 
         sfRenderWindow_display(window);
@@ -173,4 +142,30 @@ vector2d person_delta(double angle)
     delta_s.y = delta.y * cos(angle) + sin(angle) * delta.x;
 
     return delta_s;
+}
+
+void intersection_cr(sfRenderWindow *window, sfVector2f pos, line wall[])
+{
+    sfVector2f look_for;
+    vector2d sect_dot;
+    line ray;
+    sfVertex cast_line[2];
+    _Bool hit;
+    for (size_t i = 0; i < RAYS; i++)
+    {
+        double alpha = 2 * PI / RAYS * i;
+        hit = false;
+        look_for.x = pos.x + (float) cos(alpha) * 10;
+        look_for.y = pos.y + (float) sin(alpha) * 10;
+        line_init(&ray, pos.x, pos.y, look_for.x, look_for.y);
+        sect_dot = intersect(&ray, wall, WALLS, &hit);
+        if (hit)
+        {
+            cast_line[0].position = pos;
+            cast_line[1].position.x = (float) sect_dot.x;
+            cast_line[1].position.y = (float) sect_dot.y;
+            cast_line[0].color = cast_line[1].color = sfBlue;
+            sfRenderWindow_drawPrimitives(window, cast_line, 2, sfLines, NULL);
+        }
+    }
 }

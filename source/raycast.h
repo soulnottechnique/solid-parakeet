@@ -10,20 +10,15 @@
 
 #define SQR(x) ((x) * (x))
 
-#define EPS 1e-6
+#define EPS 0.1F
 
 typedef struct 
 {
-    double x, y;
-} vector2d;
-
-typedef struct 
-{
-    vector2d start, end;
+    sfVector2f start, end;
 } line; 
 
 
-void line_init(line *lin, double x1, double y1, double x2, double y2);
-vector2d intersect(line *ray, line lin[], size_t n, _Bool *hit);
+void line_init(line *lin, float x1, float y1, float x2, float y2);
+sfVector2f intersect(line *ray, line lin[], size_t n, _Bool *hit);
 
 #endif
